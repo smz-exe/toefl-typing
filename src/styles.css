@@ -103,49 +103,61 @@
   .typing-container {
     @apply p-8 md:p-10 bg-card rounded-md border border-border;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    max-width: 90%;
+    width: 100%;
     margin: 0 auto;
     min-height: 280px;
+    overflow: hidden; /* Prevent content from overflowing */
   }
 
   .typing-text {
-    @apply font-mono text-xl leading-relaxed;
+    @apply font-mono text-3xl;
     letter-spacing: 0.01em;
+    line-height: 1.8; /* 20% increase from 1.5 */
   }
 
   /* Correct/incorrect character styling */
   .char-correct {
-    @apply text-primary font-medium;
+    color: #006699; /* Vivid teal blue as requested */
+    font-weight: 500;
   }
 
   .char-incorrect {
-    @apply text-destructive bg-destructive/15 font-medium;
+    @apply bg-destructive/15 font-medium;
     text-decoration: underline;
+    color: #cc0000; /* Bright red for errors */
   }
 
   .char-current {
-    @apply bg-accent animate-pulse;
-    border-left: 2px solid var(--primary);
-    margin-left: -2px;
+    position: relative;
+    background-color: rgba(0, 102, 153, 0.1); /* Light background highlight */
+    border-left: 3px solid #006699; /* Vertical line indicator */
+    margin-left: -3px;
+    /* No animations for visual stability */
   }
 
-  /* Metrics display */
+  .char-untyped {
+    color: #aaaaaa; /* Soft light gray for untyped text */
+  }
+
+  /* Metrics display - simplified */
   .metrics-container {
-    @apply flex justify-between mb-8 gap-4;
+    @apply flex justify-center mb-8 gap-8;
+    max-width: 90%;
+    margin: 0 auto;
   }
 
   .metric-item {
     @apply bg-card p-4 rounded-md border border-border;
-    min-width: 110px;
+    min-width: 130px;
     text-align: center;
   }
 
   .metric-label {
-    @apply text-muted-foreground text-sm mb-1 block;
+    @apply text-muted-foreground text-sm mb-2 block;
   }
 
   .metric-value {
-    @apply font-medium text-lg;
+    @apply font-medium text-2xl;
   }
 
   /* Progress bar */
@@ -154,6 +166,8 @@
   }
 
   .progress-value {
-    @apply bg-primary h-full transition-all duration-300 ease-out;
+    @apply bg-primary h-full;
+    /* Subtle transition only for width to avoid distracting animations */
+    transition: width 200ms linear;
   }
 }

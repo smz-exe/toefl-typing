@@ -4,18 +4,13 @@ import { Passage, TypingError } from '../../types/typing.js';
 interface TypingInterfaceProps {
   passage: Passage;
   onComplete: (wpm: number, accuracy: number, errors: TypingError[]) => void;
-  timerDuration?: number; // in seconds, optional
 }
 
 /**
  * The main typing interface component that handles user input and provides real-time feedback
  * Optimized for performance with integrated display and input
  */
-export const TypingInterface: React.FC<TypingInterfaceProps> = ({
-  passage,
-  onComplete,
-  timerDuration,
-}) => {
+export const TypingInterface: React.FC<TypingInterfaceProps> = ({ passage, onComplete }) => {
   // State for tracking user input and progress
   const [input, setInput] = useState<string>('');
   const [startTime, setStartTime] = useState<number | null>(null);
@@ -25,13 +20,11 @@ export const TypingInterface: React.FC<TypingInterfaceProps> = ({
   const [wpm, setWpm] = useState<number>(0);
   const [accuracy, setAccuracy] = useState<number>(100);
   const [isCompleted, setIsCompleted] = useState<boolean>(false);
-  const [timeLeft, setTimeLeft] = useState<number | null>(timerDuration || null);
-  const [visibleLines, setVisibleLines] = useState<number[]>([0, 1, 2]); // Track which lines are visible (max 3)
+  const [visibleLines, setVisibleLines] = useState<number[]>([0, 1, 2]); // Track which lines are visible (exactly 3)
 
   // Refs
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const interfaceRef = useRef<HTMLDivElement>(null);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const lastInputLengthRef = useRef<number>(0);
 
   // Split passage content into lines for windowed rendering
@@ -66,30 +59,6 @@ export const TypingInterface: React.FC<TypingInterfaceProps> = ({
     }
   }, []);
 
-  // Handle timer countdown if timerDuration is provided
-  useEffect(() => {
-    if (timerDuration && startTime && !endTime) {
-      intervalRef.current = setInterval(() => {
-        const elapsed = Math.floor((Date.now() - startTime) / 1000);
-        const remaining = timerDuration - elapsed;
-
-        if (remaining <= 0) {
-          setTimeLeft(0);
-          handleComplete();
-          clearInterval(intervalRef.current as NodeJS.Timeout);
-        } else {
-          setTimeLeft(remaining);
-        }
-      }, 1000);
-    }
-
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    };
-  }, [startTime, endTime, timerDuration]);
-
   // Calculate WPM and accuracy in real-time (optimized with throttling)
   useEffect(() => {
     if (startTime && !endTime && input.length > 0) {
@@ -121,9 +90,10 @@ export const TypingInterface: React.FC<TypingInterfaceProps> = ({
     }
   }, [input, startTime, endTime, passage.content]);
 
-  // Update visible lines based on current position
+  // Update visible lines based on current position - optimized for stability
   useEffect(() => {
     if (input.length === 0) {
+      // Show exactly 3 lines initially
       setVisibleLines([0, 1, 2]);
       return;
     }
@@ -140,15 +110,23 @@ export const TypingInterface: React.FC<TypingInterfaceProps> = ({
       }
     }
 
-    // Update visible lines to show current line and next two lines
+    // Only update visible lines when the current line changes
+    // This prevents unnecessary re-renders and keeps the text stable
     const newVisibleLines = [
       currentLineIndex,
       Math.min(currentLineIndex + 1, passageLines.length - 1),
       Math.min(currentLineIndex + 2, passageLines.length - 1),
     ];
 
-    setVisibleLines(newVisibleLines);
-  }, [currentPosition, passageLines]);
+    // Check if the visible lines have actually changed before updating state
+    if (
+      newVisibleLines[0] !== visibleLines[0] ||
+      newVisibleLines[1] !== visibleLines[1] ||
+      newVisibleLines[2] !== visibleLines[2]
+    ) {
+      setVisibleLines(newVisibleLines);
+    }
+  }, [currentPosition, passageLines, visibleLines]);
 
   // Optimized error checking - only check new characters
   const updateErrors = useCallback(
@@ -254,13 +232,14 @@ export const TypingInterface: React.FC<TypingInterfaceProps> = ({
   }, [visibleLines, passageLines]);
 
   // Render the visible passage with highlighting for current position and errors
+  // Optimized to minimize DOM updates and prevent unnecessary re-renders
   const renderVisiblePassage = useCallback(() => {
     const chars = visiblePassageContent.split('');
     const absoluteStartIndex = visibleStartIndex;
 
     return chars.map((char, relativeIndex) => {
       const absoluteIndex = absoluteStartIndex + relativeIndex;
-      let className = '';
+      let className = 'char-untyped'; // Default class for untyped text
 
       if (absoluteIndex < input.length) {
         // Character has been typed
@@ -273,8 +252,10 @@ export const TypingInterface: React.FC<TypingInterfaceProps> = ({
         className = 'char-current'; // Current position
       }
 
+      // Use a stable key to prevent unnecessary re-renders
+      // Using only absoluteIndex as the key is more stable
       return (
-        <span key={`${absoluteIndex}-${char}`} className={className}>
+        <span key={absoluteIndex} className={className}>
           {char}
         </span>
       );
@@ -282,52 +263,51 @@ export const TypingInterface: React.FC<TypingInterfaceProps> = ({
   }, [visiblePassageContent, visibleStartIndex, input, passage.content]);
 
   return (
-    <div className="w-full max-w-4xl mx-auto">
-      {/* Metrics display */}
+    <div className="w-full mx-auto">
+      {/* Full width container */}
+      {/* Metrics display - simplified without timer */}
       <div className="metrics-container">
-        <div className="flex space-x-6">
-          <div className="metric-item">
-            <span className="metric-label">WPM</span>
-            <span className="metric-value">{wpm}</span>
-          </div>
-          <div className="metric-item">
-            <span className="metric-label">Accuracy</span>
-            <span className="metric-value">{accuracy}%</span>
-          </div>
-          {errors.length > 0 && (
-            <div className="metric-item">
-              <span className="metric-label">Errors</span>
-              <span className="metric-value text-destructive">{errors.length}</span>
-            </div>
-          )}
+        <div className="metric-item">
+          <span className="metric-label">WPM</span>
+          <span className="metric-value">{wpm}</span>
         </div>
-
-        {timeLeft !== null && (
+        <div className="metric-item">
+          <span className="metric-label">Accuracy</span>
+          <span className="metric-value">{accuracy}%</span>
+        </div>
+        {errors.length > 0 && (
           <div className="metric-item">
-            <span className="metric-label">Time</span>
-            <span className={`metric-value ${timeLeft < 10 ? 'text-destructive' : ''}`}>
-              {timeLeft}s
-            </span>
+            <span className="metric-label">Errors</span>
+            <span className="metric-value text-destructive">{errors.length}</span>
           </div>
         )}
       </div>
-
       {/* Integrated typing interface - combines display and input */}
       <div
         ref={interfaceRef}
-        className="typing-container typing-text cursor-text min-h-[240px] focus-within:border-primary transition-colors"
+        className="typing-container typing-text cursor-text min-h-[280px] w-full focus-within:border-primary transition-colors"
         onClick={() => inputRef.current?.focus()}
       >
         {isCompleted ? (
-          <div className="text-green-600 dark:text-green-400 font-bold">
-            Completed! WPM: {wpm} | Accuracy: {accuracy}%
+          <div className="text-center py-10">
+            <div className="text-3xl font-bold mb-4" style={{ color: '#006699' }}>
+              Completed!
+            </div>
+            <div className="text-xl">
+              <span className="mr-6">
+                WPM: <strong>{wpm}</strong>
+              </span>
+              <span>
+                Accuracy: <strong>{accuracy}%</strong>
+              </span>
+            </div>
           </div>
         ) : (
           <div className="relative">
-            {/* Visible passage with highlighting */}
+            {/* Visible passage with highlighting - removed transitions for stability */}
             <div className="whitespace-pre-wrap leading-relaxed">{renderVisiblePassage()}</div>
 
-            {/* Progress indicator */}
+            {/* Progress indicator - kept transition only for progress bar which doesn't affect typing */}
             <div className="progress-bar">
               <div
                 className="progress-value"
@@ -349,7 +329,6 @@ export const TypingInterface: React.FC<TypingInterfaceProps> = ({
           </div>
         )}
       </div>
-
       {/* Instructions */}
       <div className="mt-6 text-sm text-muted-foreground text-center">
         {isCompleted ? (

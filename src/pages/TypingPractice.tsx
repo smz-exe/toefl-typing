@@ -9,7 +9,6 @@ import {
 } from '../types/typing.js';
 import { TypingInterface } from '../components/typing/TypingInterface.js';
 import { TypingMetrics } from '../components/typing/TypingMetrics.js';
-import { TypingTimer, TimerSelector } from '../components/typing/TypingTimer.js';
 import { passages } from '../data/passages.js';
 import typingService from '../services/typingService.js';
 
@@ -22,9 +21,6 @@ export const TypingPractice: React.FC = () => {
 
   // State
   const [passage, setPassage] = useState<Passage | null>(null);
-  const [timerDuration, setTimerDuration] = useState<number | null>(null);
-  const [isTimerActive, setIsTimerActive] = useState<boolean>(false);
-  const [isPaused, setIsPaused] = useState<boolean>(false);
   const [currentSession, setCurrentSession] = useState<{
     wpm: number;
     accuracy: number;
@@ -74,32 +70,13 @@ export const TypingPractice: React.FC = () => {
     }
   }, [passageId, navigate, selectedFormat]);
 
-  // Handle timer selection
-  const handleTimerSelect = (duration: number) => {
-    setTimerDuration(duration);
-  };
-
-  // Handle timer start
-  const handleStartTimer = () => {
-    setIsTimerActive(true);
-  };
-
-  // Handle timer pause/resume
-  const handleTogglePause = () => {
-    setIsPaused((prev) => !prev);
-  };
-
-  // Handle timer completion
-  const handleTimeUp = () => {
-    // Timer is up, but we'll let the typing interface handle completion
-    setIsTimerActive(false);
-  };
+  // Timer functionality removed as requested
 
   // Handle typing completion
   const handleTypingComplete = (wpm: number, accuracy: number, errors: TypingError[]) => {
     // Create session data
     const now = new Date();
-    const startTime = new Date(now.getTime() - (timerDuration ? timerDuration * 1000 : 0));
+    const startTime = new Date(now.getTime() - 60000); // Assume 1 minute for stats
 
     // Save session
     if (passage) {
@@ -110,24 +87,17 @@ export const TypingPractice: React.FC = () => {
         wpm,
         accuracy,
         errors,
-        elapsedTime: timerDuration || Math.floor((now.getTime() - startTime.getTime()) / 1000),
+        elapsedTime: Math.floor((now.getTime() - startTime.getTime()) / 1000),
       });
 
       // Add to past sessions
       setPastSessions((prev) => [session, ...prev]);
     }
-
-    // Reset timer
-    setIsTimerActive(false);
-    setIsPaused(false);
   };
 
   // Handle retry
   const handleRetry = () => {
     setCurrentSession(null);
-    setTimerDuration(null);
-    setIsTimerActive(false);
-    setIsPaused(false);
   };
 
   // Handle settings change
@@ -142,9 +112,6 @@ export const TypingPractice: React.FC = () => {
   const handleFormatChange = (format: PassageFormat) => {
     setSelectedFormat(format);
     setCurrentSession(null);
-    setTimerDuration(null);
-    setIsTimerActive(false);
-    setIsPaused(false);
   };
 
   // If no passage is loaded yet, show loading
@@ -157,7 +124,7 @@ export const TypingPractice: React.FC = () => {
   }
 
   return (
-    <div className="container mx-auto">
+    <div className="w-full px-4">
       {/* Passage info */}
       <div className="mb-10">
         <h1 className="text-2xl font-medium mb-3">{passage.title}</h1>
@@ -181,7 +148,7 @@ export const TypingPractice: React.FC = () => {
       </div>
 
       {/* Format selector */}
-      {!currentSession && !isTimerActive && (
+      {!currentSession && (
         <div className="mb-8">
           <h2 className="text-lg font-medium mb-3">Passage Format</h2>
           <div className="flex space-x-4">
@@ -234,40 +201,10 @@ export const TypingPractice: React.FC = () => {
         </div>
       ) : (
         <div className="space-y-8">
-          {/* Timer selection (if not active) */}
-          {!isTimerActive && (
-            <TimerSelector
-              onSelectDuration={handleTimerSelect}
-              selectedDuration={timerDuration || undefined}
-            />
-          )}
-
-          {/* Timer (if duration selected) */}
-          {timerDuration && (
-            <div className="mb-8">
-              <TypingTimer
-                duration={timerDuration}
-                onTimeUp={handleTimeUp}
-                isActive={isTimerActive}
-                isPaused={isPaused}
-              />
-
-              {!isTimerActive && (
-                <div className="mt-6 flex justify-center">
-                  <button onClick={handleStartTimer} className="btn btn-primary">
-                    Start Timed Practice
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Typing interface */}
-          <TypingInterface
-            passage={passage}
-            onComplete={handleTypingComplete}
-            timerDuration={isTimerActive ? timerDuration || undefined : undefined}
-          />
+          {/* Typing interface - expanded to fill the space */}
+          <div className="py-8">
+            <TypingInterface passage={passage} onComplete={handleTypingComplete} />
+          </div>
 
           {/* Past performance (if available) */}
           {pastSessions.length > 0 && (
