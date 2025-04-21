@@ -265,12 +265,12 @@ export const TypingInterface: React.FC<TypingInterfaceProps> = ({
       if (absoluteIndex < input.length) {
         // Character has been typed
         if (input[absoluteIndex] === passage.content[absoluteIndex]) {
-          className = 'text-green-600 dark:text-green-400'; // Correct
+          className = 'char-correct'; // Correct
         } else {
-          className = 'text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30'; // Error
+          className = 'char-incorrect'; // Error
         }
       } else if (absoluteIndex === input.length) {
-        className = 'bg-gray-300 dark:bg-gray-600 animate-pulse'; // Current position
+        className = 'char-current'; // Current position
       }
 
       return (
@@ -284,28 +284,28 @@ export const TypingInterface: React.FC<TypingInterfaceProps> = ({
   return (
     <div className="w-full max-w-4xl mx-auto">
       {/* Metrics display */}
-      <div className="flex justify-between mb-4">
-        <div className="flex space-x-4">
-          <div className="bg-white dark:bg-gray-800 p-2 rounded-lg shadow">
-            <span className="text-gray-500 dark:text-gray-400">WPM: </span>
-            <span className="font-bold">{wpm}</span>
+      <div className="metrics-container">
+        <div className="flex space-x-6">
+          <div className="metric-item">
+            <span className="metric-label">WPM</span>
+            <span className="metric-value">{wpm}</span>
           </div>
-          <div className="bg-white dark:bg-gray-800 p-2 rounded-lg shadow">
-            <span className="text-gray-500 dark:text-gray-400">Accuracy: </span>
-            <span className="font-bold">{accuracy}%</span>
+          <div className="metric-item">
+            <span className="metric-label">Accuracy</span>
+            <span className="metric-value">{accuracy}%</span>
           </div>
           {errors.length > 0 && (
-            <div className="bg-white dark:bg-gray-800 p-2 rounded-lg shadow">
-              <span className="text-gray-500 dark:text-gray-400">Errors: </span>
-              <span className="font-bold text-red-600 dark:text-red-400">{errors.length}</span>
+            <div className="metric-item">
+              <span className="metric-label">Errors</span>
+              <span className="metric-value text-destructive">{errors.length}</span>
             </div>
           )}
         </div>
 
         {timeLeft !== null && (
-          <div className="bg-white dark:bg-gray-800 p-2 rounded-lg shadow">
-            <span className="text-gray-500 dark:text-gray-400">Time: </span>
-            <span className={`font-bold ${timeLeft < 10 ? 'text-red-600 dark:text-red-400' : ''}`}>
+          <div className="metric-item">
+            <span className="metric-label">Time</span>
+            <span className={`metric-value ${timeLeft < 10 ? 'text-destructive' : ''}`}>
               {timeLeft}s
             </span>
           </div>
@@ -315,7 +315,7 @@ export const TypingInterface: React.FC<TypingInterfaceProps> = ({
       {/* Integrated typing interface - combines display and input */}
       <div
         ref={interfaceRef}
-        className="w-full p-4 bg-white dark:bg-gray-800 rounded-lg shadow font-mono text-lg leading-relaxed border-2 border-primary cursor-text min-h-[200px] focus-within:border-blue-500 transition-colors"
+        className="typing-container typing-text cursor-text min-h-[240px] focus-within:border-primary transition-colors"
         onClick={() => inputRef.current?.focus()}
       >
         {isCompleted ? (
@@ -325,12 +325,12 @@ export const TypingInterface: React.FC<TypingInterfaceProps> = ({
         ) : (
           <div className="relative">
             {/* Visible passage with highlighting */}
-            <div className="whitespace-pre-wrap">{renderVisiblePassage()}</div>
+            <div className="whitespace-pre-wrap leading-relaxed">{renderVisiblePassage()}</div>
 
             {/* Progress indicator */}
-            <div className="mt-2 w-full bg-gray-200 dark:bg-gray-700 h-1 rounded-full overflow-hidden">
+            <div className="progress-bar">
               <div
-                className="bg-primary h-full transition-all duration-300 ease-out"
+                className="progress-value"
                 style={{
                   width: `${Math.min(100, (input.length / passage.content.length) * 100)}%`,
                 }}
@@ -351,12 +351,9 @@ export const TypingInterface: React.FC<TypingInterfaceProps> = ({
       </div>
 
       {/* Instructions */}
-      <div className="mt-4 text-sm text-gray-500 dark:text-gray-400 text-center">
+      <div className="mt-6 text-sm text-muted-foreground text-center">
         {isCompleted ? (
-          <button
-            className="mt-4 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
-            onClick={() => window.location.reload()}
-          >
+          <button className="mt-4 btn btn-primary" onClick={() => window.location.reload()}>
             Practice Again
           </button>
         ) : (

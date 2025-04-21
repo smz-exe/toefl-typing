@@ -157,24 +157,24 @@ export const TypingPractice: React.FC = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto">
       {/* Passage info */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{passage.title}</h1>
-        <div className="flex flex-wrap gap-2 mb-4">
-          <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs rounded-full">
+      <div className="mb-10">
+        <h1 className="text-2xl font-medium mb-3">{passage.title}</h1>
+        <div className="flex flex-wrap gap-3 mb-4">
+          <span className="px-2 py-1 bg-secondary text-secondary-foreground text-xs rounded-md">
             {passage.difficulty.charAt(0).toUpperCase() + passage.difficulty.slice(1)}
           </span>
-          <span className="px-2 py-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 text-xs rounded-full">
+          <span className="px-2 py-1 bg-secondary text-secondary-foreground text-xs rounded-md">
             {passage.type.charAt(0).toUpperCase() + passage.type.slice(1)}
           </span>
-          <span className="px-2 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 text-xs rounded-full">
+          <span className="px-2 py-1 bg-secondary text-secondary-foreground text-xs rounded-md">
             {passage.domain.charAt(0).toUpperCase() + passage.domain.slice(1)}
           </span>
-          <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 text-xs rounded-full">
+          <span className="px-2 py-1 bg-secondary text-secondary-foreground text-xs rounded-md">
             {passage.wordCount} words
           </span>
-          <span className="px-2 py-1 bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 text-xs rounded-full">
+          <span className="px-2 py-1 bg-secondary text-secondary-foreground text-xs rounded-md">
             {passage.format === 'complete_essay' ? 'Complete Essay' : 'Single Paragraph'}
           </span>
         </div>
@@ -182,33 +182,27 @@ export const TypingPractice: React.FC = () => {
 
       {/* Format selector */}
       {!currentSession && !isTimerActive && (
-        <div className="mb-6">
-          <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2">
-            Passage Format
-          </h2>
+        <div className="mb-8">
+          <h2 className="text-lg font-medium mb-3">Passage Format</h2>
           <div className="flex space-x-4">
             <button
               onClick={() => handleFormatChange('complete_essay')}
-              className={`px-4 py-2 rounded-lg transition-colors ${
-                selectedFormat === 'complete_essay'
-                  ? 'bg-primary text-white'
-                  : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
+              className={`btn ${
+                selectedFormat === 'complete_essay' ? 'btn-primary' : 'btn-secondary'
               }`}
             >
               Complete Essay
             </button>
             <button
               onClick={() => handleFormatChange('single_paragraph')}
-              className={`px-4 py-2 rounded-lg transition-colors ${
-                selectedFormat === 'single_paragraph'
-                  ? 'bg-primary text-white'
-                  : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
+              className={`btn ${
+                selectedFormat === 'single_paragraph' ? 'btn-primary' : 'btn-secondary'
               }`}
             >
               Single Paragraph
             </button>
           </div>
-          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+          <p className="mt-3 text-sm text-muted-foreground">
             {selectedFormat === 'complete_essay'
               ? 'Practice with full essays to build endurance and comprehensive understanding.'
               : 'Focus on single paragraphs for targeted practice and quicker sessions.'}
@@ -226,16 +220,13 @@ export const TypingPractice: React.FC = () => {
             passageContent={passage.content}
           />
 
-          <div className="flex justify-center space-x-4">
-            <button
-              onClick={handleRetry}
-              className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
-            >
+          <div className="flex justify-center space-x-4 mt-8">
+            <button onClick={handleRetry} className="btn btn-primary">
               Practice Again
             </button>
             <button
               onClick={() => navigate('/passages')}
-              className="px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              className="btn border border-border text-foreground hover:bg-secondary"
             >
               Choose Another Passage
             </button>
@@ -262,11 +253,8 @@ export const TypingPractice: React.FC = () => {
               />
 
               {!isTimerActive && (
-                <div className="mt-4 flex justify-center">
-                  <button
-                    onClick={handleStartTimer}
-                    className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
-                  >
+                <div className="mt-6 flex justify-center">
+                  <button onClick={handleStartTimer} className="btn btn-primary">
                     Start Timed Practice
                   </button>
                 </div>
