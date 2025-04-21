@@ -1,16 +1,15 @@
-import React, { useEffect, lazy, Suspense } from 'react';
+import React, { lazy, Suspense } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom';
 import Home from './pages/Home.js';
-import Dashboard from './pages/Dashboard.js';
-import Users from './pages/Users.js';
-import Login from './pages/Login.js';
+import TypingPractice from './pages/TypingPractice.js';
+import PassageLibrary from './pages/PassageLibrary.js';
+import Statistics from './pages/Statistics.js';
+import Settings from './pages/Settings.js';
 // Lazy load the About page for code splitting demonstration
 const About = lazy(() => import('./pages/About.js'));
 import Layout from './components/layout/Layout.js';
 import { ThemeProvider } from './context/ThemeContext.js';
-import { authService } from './services/authService.js';
-import { useUserStore } from './store/useUserStore.js';
 
 // Create a query client
 const queryClient = new QueryClient({
@@ -22,16 +21,7 @@ const queryClient = new QueryClient({
   },
 });
 
-// Protected route wrapper component
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const isAuthenticated = useUserStore((state) => state.isAuthenticated);
-
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
-
-  return <>{children}</>;
-};
+// Create a query client
 
 // Define routes
 const router = createBrowserRouter([
@@ -44,27 +34,35 @@ const router = createBrowserRouter([
     ),
   },
   {
-    path: '/login',
-    element: <Login />,
-  },
-  {
-    path: '/dashboard',
+    path: '/practice/:passageId?',
     element: (
-      <ProtectedRoute>
-        <Layout>
-          <Dashboard />
-        </Layout>
-      </ProtectedRoute>
+      <Layout>
+        <TypingPractice />
+      </Layout>
     ),
   },
   {
-    path: '/users',
+    path: '/passages',
     element: (
-      <ProtectedRoute>
-        <Layout>
-          <Users />
-        </Layout>
-      </ProtectedRoute>
+      <Layout>
+        <PassageLibrary />
+      </Layout>
+    ),
+  },
+  {
+    path: '/statistics',
+    element: (
+      <Layout>
+        <Statistics />
+      </Layout>
+    ),
+  },
+  {
+    path: '/settings',
+    element: (
+      <Layout>
+        <Settings />
+      </Layout>
     ),
   },
   // About page with lazy loading
@@ -95,15 +93,6 @@ const router = createBrowserRouter([
  * Main App component that sets up the application with React Router and TanStack Query
  */
 function App() {
-  // Initialize authentication from stored token
-  useEffect(() => {
-    const initializeAuth = async () => {
-      await authService.initAuth();
-    };
-
-    initializeAuth();
-  }, []);
-
   return (
     <ThemeProvider>
       <QueryClientProvider client={queryClient}>

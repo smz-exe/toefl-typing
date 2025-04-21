@@ -1,6 +1,13 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LucideHome, LucideLayoutDashboard, LucideUsers, LucideInfo } from 'lucide-react';
+import {
+  LucideHome,
+  LucideKeyboard,
+  LucideLibrary,
+  LucideBarChart2,
+  LucideSettings,
+  LucideInfo,
+} from 'lucide-react';
 import ThemeToggle from '../ThemeToggle.js';
 
 /**
@@ -11,8 +18,10 @@ export const Navigation: React.FC = () => {
 
   const navItems = [
     { name: 'Home', path: '/', icon: LucideHome },
-    { name: 'Dashboard', path: '/dashboard', icon: LucideLayoutDashboard },
-    { name: 'Users', path: '/users', icon: LucideUsers },
+    { name: 'Practice', path: '/practice', icon: LucideKeyboard },
+    { name: 'Passages', path: '/passages', icon: LucideLibrary },
+    { name: 'Statistics', path: '/statistics', icon: LucideBarChart2 },
+    { name: 'Settings', path: '/settings', icon: LucideSettings },
     { name: 'About', path: '/about', icon: LucideInfo },
   ];
 
@@ -22,11 +31,13 @@ export const Navigation: React.FC = () => {
         <div className="flex justify-between h-16">
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
-              <span className="text-xl font-bold text-primary dark:text-primary">TS Web</span>
+              <span className="text-xl font-bold text-primary dark:text-primary">TOEFL Typing</span>
             </div>
             <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
               {navItems.map((item) => {
-                const isActive = location.pathname === item.path;
+                const isActive =
+                  location.pathname === item.path ||
+                  (item.path !== '/' && location.pathname.startsWith(item.path));
                 return (
                   <Link
                     key={item.name}
@@ -95,7 +106,9 @@ export const Navigation: React.FC = () => {
       <div className="sm:hidden" id="mobile-menu">
         <div className="pt-2 pb-3 space-y-1">
           {navItems.map((item) => {
-            const isActive = location.pathname === item.path;
+            const isActive =
+              location.pathname === item.path ||
+              (item.path !== '/' && location.pathname.startsWith(item.path));
             return (
               <Link
                 key={item.name}
