@@ -1,0 +1,22 @@
+{
+  "name": "TypeScript Modern Web Boilerplate",
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:20",
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+      },
+      "extensions": [
+        "bradlc.vscode-tailwindcss",
+        "esbenp.prettier-vscode",
+        "dbaeumer.vscode-eslint",
+        "ms-vscode.vscode-typescript-next",
+        "roocode.roocode-vscode"
+      ]
+    }
+  },
+  "postCreateCommand": "yarn install",
+  "forwardPorts": [3000],
+  "mounts": ["source=node_modules,target=/workspace/node_modules,type=volume"]
+}
