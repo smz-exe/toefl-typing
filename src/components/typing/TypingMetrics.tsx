@@ -1,5 +1,6 @@
 import React from 'react';
-import { TypingSession, TypingError } from '../../types/typing.js';
+import { TypingSession, TypingError, DetailedFeedback } from '../../types/typing.js';
+import typingService from '../../services/typingService.js';
 
 interface TypingMetricsProps {
   currentSession?: {
@@ -10,6 +11,7 @@ interface TypingMetricsProps {
   };
   pastSessions?: TypingSession[];
   showDetails?: boolean;
+  passageContent?: string;
 }
 
 /**
@@ -19,6 +21,7 @@ export const TypingMetrics: React.FC<TypingMetricsProps> = ({
   currentSession,
   pastSessions = [],
   showDetails = false,
+  passageContent = '',
 }) => {
   // Calculate average metrics from past sessions
   const averageWpm = pastSessions.length
@@ -113,6 +116,16 @@ export const TypingMetrics: React.FC<TypingMetricsProps> = ({
               </div>
             </div>
           )}
+
+          {/* Detailed Feedback */}
+          {showDetails && currentSession && (
+            <DetailedFeedbackSection
+              errors={currentSession.errors}
+              wpm={currentSession.wpm}
+              accuracy={currentSession.accuracy}
+              passageContent={passageContent}
+            />
+          )}
         </div>
       )}
 
@@ -180,4 +193,176 @@ export const TypingMetrics: React.FC<TypingMetricsProps> = ({
       )}
     </div>
   );
+};
+
+interface DetailedFeedbackSectionProps {
+  errors: TypingError[];
+  wpm: number;
+  accuracy: number;
+  passageContent?: string;
+}
+
+/**
+ * Component for displaying detailed typing feedback
+ */
+const DetailedFeedbackSection: React.FC<DetailedFeedbackSectionProps> = ({
+  errors,
+  wpm,
+  accuracy,
+  passageContent = '',
+}) => {
+  // Generate detailed feedback if passage content is available
+  const feedback: DetailedFeedback | null = passageContent
+    ? typingService.generateDetailedFeedback(
+        {
+          id: '',
+          passageId: '',
+          startTime: new Date(),
+          wpm,
+          accuracy,
+          errors,
+          completed: true,
+        },
+        passageContent,
+      )
+    : null;
+
+  if (!feedback) return null;
+
+  return (
+    <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+      <h3 className="text-lg font-bold mb-4 text-gray-900 dark:text-white">Detailed Analysis</h3>
+
+      {/* Performance Rating */}
+      <div className="mb-6">
+        <h4 className="text-md font-semibold mb-3 text-gray-800 dark:text-gray-200">
+          Performance Rating
+        </h4>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg text-center">
+            <div className="text-sm text-gray-500 dark:text-gray-400">Speed</div>
+            <div
+              className="text-2xl font-bold"
+              style={{ color: getRatingColor(feedback.performanceRating.speed) }}
+            >
+              {feedback.performanceRating.speed}/10
+            </div>
+          </div>
+          <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg text-center">
+            <div className="text-sm text-gray-500 dark:text-gray-400">Accuracy</div>
+            <div
+              className="text-2xl font-bold"
+              style={{ color: getRatingColor(feedback.performanceRating.accuracy) }}
+            >
+              {feedback.performanceRating.accuracy}/10
+            </div>
+          </div>
+          <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg text-center">
+            <div className="text-sm text-gray-500 dark:text-gray-400">Consistency</div>
+            <div
+              className="text-2xl font-bold"
+              style={{ color: getRatingColor(feedback.performanceRating.consistency) }}
+            >
+              {feedback.performanceRating.consistency}/10
+            </div>
+          </div>
+          <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg text-center">
+            <div className="text-sm text-gray-500 dark:text-gray-400">Overall</div>
+            <div
+              className="text-2xl font-bold"
+              style={{ color: getRatingColor(feedback.performanceRating.overall) }}
+            >
+              {feedback.performanceRating.overall}/10
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Strengths and Weaknesses */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div>
+          <h4 className="text-md font-semibold mb-2 text-gray-800 dark:text-gray-200">Strengths</h4>
+          <ul className="list-disc pl-5 space-y-1 text-sm text-gray-600 dark:text-gray-300">
+            {feedback.strengths.map((strength, index) => (
+              <li key={index}>{strength}</li>
+            ))}
+            {feedback.strengths.length === 0 && (
+              <li className="text-gray-500 dark:text-gray-400 italic">
+                No notable strengths identified
+              </li>
+            )}
+          </ul>
+        </div>
+        <div>
+          <h4 className="text-md font-semibold mb-2 text-gray-800 dark:text-gray-200">
+            Areas for Improvement
+          </h4>
+          <ul className="list-disc pl-5 space-y-1 text-sm text-gray-600 dark:text-gray-300">
+            {feedback.weaknesses.map((weakness, index) => (
+              <li key={index}>{weakness}</li>
+            ))}
+            {feedback.weaknesses.length === 0 && (
+              <li className="text-gray-500 dark:text-gray-400 italic">
+                No significant weaknesses identified
+              </li>
+            )}
+          </ul>
+        </div>
+      </div>
+
+      {/* Suggestions */}
+      <div className="mb-6">
+        <h4 className="text-md font-semibold mb-2 text-gray-800 dark:text-gray-200">
+          Suggestions for Improvement
+        </h4>
+        <ul className="list-disc pl-5 space-y-1 text-sm text-gray-600 dark:text-gray-300">
+          {feedback.suggestions.map((suggestion, index) => (
+            <li key={index}>{suggestion}</li>
+          ))}
+        </ul>
+      </div>
+
+      {/* Error Patterns */}
+      {feedback.commonErrorPatterns.length > 0 && (
+        <div>
+          <h4 className="text-md font-semibold mb-2 text-gray-800 dark:text-gray-200">
+            Error Pattern Analysis
+          </h4>
+          <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
+            {feedback.commonErrorPatterns.map((pattern, index) => (
+              <div
+                key={index}
+                className={
+                  index > 0 ? 'mt-3 pt-3 border-t border-gray-200 dark:border-gray-600' : ''
+                }
+              >
+                <div className="flex justify-between items-center">
+                  <span className="font-mono text-sm">{pattern.pattern}</span>
+                  <span className="text-xs bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200 px-2 py-1 rounded-full">
+                    {pattern.count} occurrences
+                  </span>
+                </div>
+                {pattern.examples.length > 0 && (
+                  <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    <div>
+                      Context example:{' '}
+                      <span className="font-mono">...{pattern.examples[0]}...</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Helper function to get color based on rating
+const getRatingColor = (rating: number): string => {
+  if (rating >= 8) return '#22c55e'; // green-500
+  if (rating >= 6) return '#3b82f6'; // blue-500
+  if (rating >= 4) return '#f59e0b'; // amber-500
+  return '#ef4444'; // red-500
 };

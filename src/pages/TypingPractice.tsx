@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Passage, TypingSession, TypingError, TypingSettings } from '../types/typing.js';
+import {
+  Passage,
+  TypingSession,
+  TypingError,
+  TypingSettings,
+  PassageFormat,
+} from '../types/typing.js';
 import { TypingInterface } from '../components/typing/TypingInterface.js';
 import { TypingMetrics } from '../components/typing/TypingMetrics.js';
 import { TypingTimer, TimerSelector } from '../components/typing/TypingTimer.js';
@@ -27,6 +33,17 @@ export const TypingPractice: React.FC = () => {
   } | null>(null);
   const [pastSessions, setPastSessions] = useState<TypingSession[]>([]);
   const [settings, setSettings] = useState<TypingSettings>(typingService.getSettings());
+  const [availablePassages, setAvailablePassages] = useState<Passage[]>(passages);
+  const [selectedFormat, setSelectedFormat] = useState<PassageFormat>(settings.preferredFormat);
+
+  // Filter passages by format
+  useEffect(() => {
+    const filteredPassages = typingService.getPassagesByFormat(selectedFormat, passages);
+    setAvailablePassages(filteredPassages);
+
+    // Save the format preference
+    typingService.saveSettings({ preferredFormat: selectedFormat });
+  }, [selectedFormat]);
 
   // Load passage based on ID from URL params
   useEffect(() => {
@@ -34,6 +51,7 @@ export const TypingPractice: React.FC = () => {
       const foundPassage = passages.find((p) => p.id === passageId);
       if (foundPassage) {
         setPassage(foundPassage);
+        setSelectedFormat(foundPassage.format);
 
         // Load past sessions for this passage
         const sessions = typingService.getSessionsByPassage(passageId);
@@ -43,11 +61,18 @@ export const TypingPractice: React.FC = () => {
         navigate('/passages');
       }
     } else {
-      // No passage ID provided, use a random passage
-      const randomIndex = Math.floor(Math.random() * passages.length);
-      setPassage(passages[randomIndex]);
+      // No passage ID provided, use a random passage from filtered list
+      const filteredPassages = typingService.getPassagesByFormat(selectedFormat, passages);
+      if (filteredPassages.length > 0) {
+        const randomIndex = Math.floor(Math.random() * filteredPassages.length);
+        setPassage(filteredPassages[randomIndex]);
+      } else {
+        // Fallback to any passage if no passages match the selected format
+        const randomIndex = Math.floor(Math.random() * passages.length);
+        setPassage(passages[randomIndex]);
+      }
     }
-  }, [passageId, navigate]);
+  }, [passageId, navigate, selectedFormat]);
 
   // Handle timer selection
   const handleTimerSelect = (duration: number) => {
@@ -108,6 +133,18 @@ export const TypingPractice: React.FC = () => {
   // Handle settings change
   const handleSettingsChange = (newSettings: TypingSettings) => {
     setSettings(newSettings);
+    if (newSettings.preferredFormat !== selectedFormat) {
+      setSelectedFormat(newSettings.preferredFormat);
+    }
+  };
+
+  // Handle format change
+  const handleFormatChange = (format: PassageFormat) => {
+    setSelectedFormat(format);
+    setCurrentSession(null);
+    setTimerDuration(null);
+    setIsTimerActive(false);
+    setIsPaused(false);
   };
 
   // If no passage is loaded yet, show loading
@@ -137,8 +174,47 @@ export const TypingPractice: React.FC = () => {
           <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 text-xs rounded-full">
             {passage.wordCount} words
           </span>
+          <span className="px-2 py-1 bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 text-xs rounded-full">
+            {passage.format === 'complete_essay' ? 'Complete Essay' : 'Single Paragraph'}
+          </span>
         </div>
       </div>
+
+      {/* Format selector */}
+      {!currentSession && !isTimerActive && (
+        <div className="mb-6">
+          <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2">
+            Passage Format
+          </h2>
+          <div className="flex space-x-4">
+            <button
+              onClick={() => handleFormatChange('complete_essay')}
+              className={`px-4 py-2 rounded-lg transition-colors ${
+                selectedFormat === 'complete_essay'
+                  ? 'bg-primary text-white'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
+              }`}
+            >
+              Complete Essay
+            </button>
+            <button
+              onClick={() => handleFormatChange('single_paragraph')}
+              className={`px-4 py-2 rounded-lg transition-colors ${
+                selectedFormat === 'single_paragraph'
+                  ? 'bg-primary text-white'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
+              }`}
+            >
+              Single Paragraph
+            </button>
+          </div>
+          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+            {selectedFormat === 'complete_essay'
+              ? 'Practice with full essays to build endurance and comprehensive understanding.'
+              : 'Focus on single paragraphs for targeted practice and quicker sessions.'}
+          </p>
+        </div>
+      )}
 
       {/* Session completed view */}
       {currentSession ? (
@@ -147,6 +223,7 @@ export const TypingPractice: React.FC = () => {
             currentSession={currentSession}
             pastSessions={pastSessions}
             showDetails={true}
+            passageContent={passage.content}
           />
 
           <div className="flex justify-center space-x-4">

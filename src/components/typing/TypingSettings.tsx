@@ -119,6 +119,60 @@ export const TypingSettings: React.FC<TypingSettingsProps> = ({ onSettingsChange
             </div>
           </div>
 
+          {/* Content Preferences */}
+          <div>
+            <h3 className="text-lg font-medium mb-4 text-gray-800 dark:text-gray-200">
+              Content Preferences
+            </h3>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Preferred Passage Format
+              </label>
+              <div className="flex space-x-4">
+                <div className="flex items-center">
+                  <input
+                    type="radio"
+                    id="formatComplete"
+                    name="preferredFormat"
+                    value="complete_essay"
+                    checked={settings.preferredFormat === 'complete_essay'}
+                    onChange={() => handleSettingChange('preferredFormat', 'complete_essay')}
+                    className="h-4 w-4 text-primary border-gray-300 focus:ring-primary"
+                  />
+                  <label
+                    htmlFor="formatComplete"
+                    className="ml-2 block text-sm text-gray-700 dark:text-gray-300"
+                  >
+                    Complete Essays
+                  </label>
+                </div>
+                <div className="flex items-center">
+                  <input
+                    type="radio"
+                    id="formatParagraph"
+                    name="preferredFormat"
+                    value="single_paragraph"
+                    checked={settings.preferredFormat === 'single_paragraph'}
+                    onChange={() => handleSettingChange('preferredFormat', 'single_paragraph')}
+                    className="h-4 w-4 text-primary border-gray-300 focus:ring-primary"
+                  />
+                  <label
+                    htmlFor="formatParagraph"
+                    className="ml-2 block text-sm text-gray-700 dark:text-gray-300"
+                  >
+                    Single Paragraphs
+                  </label>
+                </div>
+              </div>
+              <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                {settings.preferredFormat === 'complete_essay'
+                  ? 'Complete essays provide comprehensive practice with longer texts, ideal for building endurance.'
+                  : 'Single paragraphs offer focused practice in shorter sessions, perfect for targeted improvement.'}
+              </p>
+            </div>
+          </div>
+
           {/* Display Settings */}
           <div>
             <h3 className="text-lg font-medium mb-4 text-gray-800 dark:text-gray-200">

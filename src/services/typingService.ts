@@ -1,4 +1,12 @@
-import { TypingSession, TypingError, TypingStats, TypingSettings } from '../types/typing.js';
+import {
+  TypingSession,
+  TypingError,
+  TypingStats,
+  TypingSettings,
+  Passage,
+  DetailedFeedback,
+  PassageFormat,
+} from '../types/typing.js';
 
 // We'll use a simple random ID generator instead of uuid to avoid the dependency
 const generateId = (): string => {
@@ -20,6 +28,7 @@ const DEFAULT_SETTINGS: TypingSettings = {
   showAccuracy: true,
   highlightErrors: true,
   soundEffects: true,
+  preferredFormat: 'complete_essay',
 };
 
 /**
@@ -168,6 +177,102 @@ export const typingService = {
       console.error('Error parsing typing settings:', error);
       return DEFAULT_SETTINGS;
     }
+  },
+
+  /**
+   * Get passages filtered by format
+   */
+  getPassagesByFormat: (format: PassageFormat, passages: Passage[]): Passage[] => {
+    return passages.filter((passage) => passage.format === format);
+  },
+
+  /**
+   * Generate detailed feedback based on typing performance
+   */
+  generateDetailedFeedback: (session: TypingSession, passageContent: string): DetailedFeedback => {
+    const strengths = [];
+    const weaknesses = [];
+    const suggestions = [];
+    const errorPatterns = new Map();
+
+    // Analyze speed
+    const speedRating = Math.min(10, Math.max(1, Math.floor(session.wpm / 15)));
+    if (session.wpm > 60) {
+      strengths.push('Excellent typing speed');
+    } else if (session.wpm > 40) {
+      strengths.push('Good typing speed');
+    } else {
+      weaknesses.push('Typing speed could be improved');
+      suggestions.push('Practice regular typing exercises to build muscle memory');
+    }
+
+    // Analyze accuracy
+    const accuracyRating = Math.min(10, Math.max(1, Math.floor(session.accuracy / 10)));
+    if (session.accuracy > 95) {
+      strengths.push('Exceptional typing accuracy');
+    } else if (session.accuracy > 85) {
+      strengths.push('Good typing accuracy');
+    } else {
+      weaknesses.push('Accuracy needs improvement');
+      suggestions.push('Focus on precision over speed in practice sessions');
+    }
+
+    // Analyze error patterns
+    session.errors.forEach((error) => {
+      const context = passageContent.substring(
+        Math.max(0, error.index - 10),
+        Math.min(passageContent.length, error.index + 10),
+      );
+
+      const key = `${error.expected} → ${error.actual}`;
+      if (!errorPatterns.has(key)) {
+        errorPatterns.set(key, { count: 0, examples: [] });
+      }
+
+      const pattern = errorPatterns.get(key);
+      pattern.count++;
+      if (pattern.examples.length < 3) {
+        pattern.examples.push(context);
+      }
+    });
+
+    // Convert error patterns to array and sort
+    const commonErrorPatterns = Array.from(errorPatterns.entries())
+      .map(([pattern, data]) => ({
+        pattern,
+        count: data.count,
+        examples: data.examples,
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+
+    // Add specific suggestions based on error patterns
+    if (commonErrorPatterns.length > 0) {
+      weaknesses.push(`Frequent errors with: ${commonErrorPatterns[0].pattern}`);
+      suggestions.push('Practice words containing these problematic character combinations');
+    }
+
+    // Calculate consistency rating based on error distribution
+    const consistencyRating = Math.min(
+      10,
+      Math.max(1, 10 - Math.floor(commonErrorPatterns.length / 2)),
+    );
+
+    // Calculate overall rating
+    const overallRating = Math.round((speedRating + accuracyRating + consistencyRating) / 3);
+
+    return {
+      strengths,
+      weaknesses,
+      suggestions,
+      commonErrorPatterns,
+      performanceRating: {
+        speed: speedRating,
+        accuracy: accuracyRating,
+        consistency: consistencyRating,
+        overall: overallRating,
+      },
+    };
   },
 
   /**
